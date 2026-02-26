@@ -24,22 +24,16 @@ export const prettyPrintMessage = (message: SDKMessage, logger: Logger) => {
       }
       break;
     case 'user':
-      for (const content of (message.message as Anthropic.Message).content) {
-        if (
-          content.type === 'bash_code_execution_tool_result' ||
-          content.type === 'code_execution_tool_result' ||
-          content.type === 'text_editor_code_execution_tool_result' ||
-          content.type === 'tool_search_tool_result' ||
-          content.type === 'web_fetch_tool_result' ||
-          content.type === 'web_search_tool_result'
-        ) {
-          logger.log(content.content);
-        }
+      if (message.tool_use_result) {
+        logger.log(
+          `\n📤 Tool Result: ${JSON.stringify(message.tool_use_result, null, 2)}`,
+        );
       }
       break;
     case 'result':
       logger.log(
         `\n 💰 Cost: ${message.total_cost_usd} | ⏱️ Time: ${message.duration_ms / 1000}s`,
       );
+      break;
   }
 };
