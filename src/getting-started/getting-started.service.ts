@@ -1,7 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Options, Query, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 import { loadEsm } from 'load-esm';
-import { SDKMessage } from './interfaces/sdk-message';
+import { SDKMessage } from '../interfaces/sdk-message';
+import { prettyPrintMessage } from 'src/utils/pretty-print-message';
 
 @Injectable()
 export class GettingStartedService implements OnModuleInit {
@@ -31,7 +32,8 @@ export class GettingStartedService implements OnModuleInit {
     });
 
     for await (const message of result as AsyncIterable<SDKMessage>) {
-      this.logger.log(message);
+      prettyPrintMessage(message, this.logger);
+      //   this.logger.log(message);
     }
   }
 }
