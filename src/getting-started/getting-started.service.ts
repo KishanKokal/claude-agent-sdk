@@ -28,10 +28,15 @@ export class GettingStartedService implements OnModuleInit {
     const result: Query = this.query({
       prompt,
       options: {
+        systemPrompt: {
+          type: 'preset',
+          preset: 'claude_code',
+        },
         model: 'claude-sonnet-4-6',
         // for continuing the session
         resume:
           this.staticSessionId.length > 0 ? this.staticSessionId : undefined,
+        permissionMode: 'bypassPermissions',
       },
     });
 
