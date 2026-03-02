@@ -10,6 +10,12 @@ export interface Todo {
 export const prettyPrintMessage = (message: SDKMessage, logger: Logger) => {
   switch (message.type) {
     case 'system':
+      console.log(message);
+      if (message.subtype === 'init') {
+        const sessionId = message.session_id;
+        logger.log(`\n🔁 Session initialised: ${sessionId}`);
+        return sessionId;
+      }
       break;
     case 'assistant':
       for (const content of (message.message as Anthropic.Message).content) {

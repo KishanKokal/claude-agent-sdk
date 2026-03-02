@@ -26,7 +26,6 @@ export class GettingStartedService implements OnModuleInit {
   constructor() {}
 
   async yourFirstAgent(prompt: string) {
-    this.logger.log(`🚀 sessionId: ${this.staticSessionId}`);
     const result: Query = this.query({
       prompt,
       options: {
