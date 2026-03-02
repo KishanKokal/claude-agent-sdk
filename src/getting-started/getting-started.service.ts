@@ -126,4 +126,56 @@ Then analyze the results and provide insights.`;
       prettyPrintMessage(message, this.logger);
     }
   }
+
+  async compareStocks() {
+    // get the current working directory
+    const cwd = process.cwd();
+
+    // ensure tmp directory exists
+    const tmpDir = path.join(cwd, 'tmp');
+    await mkdir(tmpDir, { recursive: true });
+
+    // get the absolute path to the tmp directory
+    const tmpPath = path.resolve(tmpDir);
+
+    this.logger.log(`Working directory: ${cwd}`);
+    this.logger.log(`Temp directory: ${tmpPath}`);
+
+    const options: Options = {
+      allowedTools: ['Read', 'Write', 'Bash'],
+      permissionMode: 'bypassPermissions',
+      model: 'claude-sonnet-4-6',
+      // maxTurns: 10,
+      cwd,
+      systemPrompt: `You are a financial analysis assistant.
+
+IMPORTANT:
+- Use "uv run python" to execute Python scripts
+- Save all files using ABSOLUTE PATH: ${tmpPath}/filename
+- DO NOT use /tmp - use ${tmpPath} instead
+- All packages (yfinance, pandas, etc.) are pre-installed via uv`,
+    };
+
+    const prompt = `
+Compare the performance of AAPL, MSFT and, GOOGL over the last 6 months.
+
+Write Python code to:
+1. Fetch data for all three stocks
+2. Calculate:
+  - Total return for each stock
+  - Volatility (standard deviation of daily returns)
+  - Correlation between the stocks
+3. Save the results to ${tmpPath}/comparison.csv
+Then provide an investment analysis comparing these stocks.
+  `;
+
+    const result = this.query({
+      prompt,
+      options,
+    });
+
+    for await (const message of result as AsyncIterable<SDKMessage>) {
+      prettyPrintMessage(message, this.logger);
+    }
+  }
 }

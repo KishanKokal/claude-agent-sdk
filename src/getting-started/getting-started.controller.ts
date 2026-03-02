@@ -14,4 +14,9 @@ export class GettingStartedController {
   async basicStockAnalysis() {
     return await this.gettingStartedService.basicStockAnalysis();
   }
+
+  @Post('compare-stocks')
+  async compareStocks() {
+    return await this.gettingStartedService.compareStocks();
+  }
 }
