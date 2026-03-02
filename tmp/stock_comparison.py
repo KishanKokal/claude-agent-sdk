@@ -3,94 +3,77 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 
-# --- Configuration ---
-tickers = ["AAPL", "MSFT", "GOOGL"]
-end_date = datetime(2026, 3, 2)
-start_date = end_date - timedelta(days=6 * 30)  # ~6 months
+# ── Date range: last 6 months ──────────────────────────────────────────────
+end_date   = datetime(2026, 3, 2)           # today
+start_date = end_date - timedelta(days=182) # ~6 months
 
-print(f"Fetching data from {start_date.date()} to {end_date.date()}\n")
+TICKERS = ["AAPL", "MSFT", "GOOGL"]
 
-# --- 1. Fetch Adjusted Close Prices ---
-raw = yf.download(tickers, start=start_date, end=end_date, auto_adjust=True, progress=False)
-prices = raw["Close"]
-prices.dropna(inplace=True)
+print(f"Fetching data from {start_date.date()} to {end_date.date()} …")
 
-print("Price Data (last 5 rows):")
-print(prices.tail(), "\n")
+# ── 1. Fetch adjusted close prices ────────────────────────────────────────
+raw    = yf.download(TICKERS, start=start_date, end=end_date, auto_adjust=True, progress=False)
+prices = raw["Close"].dropna()
 
-# --- 2. Daily Returns ---
-daily_returns = prices.pct_change().dropna()
+print(f"\nRetrieved {len(prices)} trading days of data.")
+print(prices.tail(3))
 
-# --- 3. Total Return (%) ---
-total_returns = ((prices.iloc[-1] / prices.iloc[0]) - 1) * 100
+# ── 2a. Total return (%) ───────────────────────────────────────────────────
+total_return = ((prices.iloc[-1] - prices.iloc[0]) / prices.iloc[0] * 100).round(2)
 
-# --- 4. Annualised Volatility (std of daily returns × √252) ---
-volatility = daily_returns.std() * np.sqrt(252) * 100  # in %
+# ── 2b. Daily returns & volatility (annualised std-dev, %) ────────────────
+daily_returns  = prices.pct_change().dropna()
+volatility_ann = (daily_returns.std() * np.sqrt(252) * 100).round(2)   # annualised
 
-# --- 5. Sharpe-like ratio (return / volatility, no risk-free rate for simplicity) ---
-sharpe = total_returns / volatility
+# ── 2c. Correlation matrix ────────────────────────────────────────────────
+corr_matrix = daily_returns.corr().round(4)
 
-# --- 6. Max Drawdown ---
-def max_drawdown(series):
-    cumulative = (1 + series).cumprod()
-    rolling_max = cumulative.cummax()
-    drawdown = (cumulative - rolling_max) / rolling_max
-    return drawdown.min() * 100  # in %
+# ── 2d. Bonus metrics ─────────────────────────────────────────────────────
+sharpe_approx = ((daily_returns.mean() * 252) / (daily_returns.std() * np.sqrt(252))).round(2)
 
-max_dd = {ticker: max_drawdown(daily_returns[ticker]) for ticker in tickers}
+max_dd = {}
+for t in TICKERS:
+    roll_max  = prices[t].cummax()
+    drawdown  = (prices[t] - roll_max) / roll_max * 100
+    max_dd[t] = round(float(drawdown.min()), 2)
 
-# --- 7. Correlation Matrix ---
-corr_matrix = daily_returns.corr()
-
-# -----------------------------------------------------------------------
-# Summary Table
-# -----------------------------------------------------------------------
+# ── 3. Build summary DataFrame & save ─────────────────────────────────────
 summary = pd.DataFrame({
-    "Total Return (%)":    total_returns.round(2),
-    "Annualised Volatility (%)": volatility.round(2),
-    "Return/Volatility Ratio":   sharpe.round(4),
-    "Max Drawdown (%)":    pd.Series(max_dd).round(2),
-    "Start Price ($)":     prices.iloc[0].round(2),
-    "End Price ($)":       prices.iloc[-1].round(2),
+    "Start Price ($)"           : prices.iloc[0].round(2),
+    "End Price ($)"             : prices.iloc[-1].round(2),
+    "Total Return (%)"          : total_return,
+    "Annualised Volatility (%)" : volatility_ann,
+    "Approx Sharpe (0% rf)"     : sharpe_approx,
+    "Max Drawdown (%)"          : pd.Series(max_dd),
 })
+summary.index.name = "Ticker"
 
-print("=" * 60)
-print("PERFORMANCE SUMMARY")
-print("=" * 60)
+out_path = "/Users/kishankokal/repos/claude-agent-sdk/tmp/comparison.csv"
+with open(out_path, "w") as f:
+    f.write("=== 6-Month Stock Performance Summary ===\n")
+    summary.to_csv(f)
+    f.write("\n=== Correlation Matrix (daily returns) ===\n")
+    corr_matrix.to_csv(f)
+
+print(f"\n✅ Results saved to {out_path}")
+
+# ── Pretty-print results ───────────────────────────────────────────────────
+sep = "=" * 62
+print(f"\n{sep}")
+print("       6-MONTH PERFORMANCE SUMMARY")
+print(sep)
 print(summary.to_string())
 
-print("\n" + "=" * 60)
-print("CORRELATION MATRIX (Daily Returns)")
-print("=" * 60)
-print(corr_matrix.round(4).to_string())
+print(f"\n{sep}")
+print("       CORRELATION MATRIX (daily returns)")
+print(sep)
+print(corr_matrix.to_string())
 
-# -----------------------------------------------------------------------
-# Save to CSV
-# -----------------------------------------------------------------------
-output_path = "/Users/kishankokal/repos/claude-agent-sdk/tmp/comparison.csv"
-
-# Combine summary + correlation into one CSV
-with open(output_path, "w") as f:
-    f.write("PERFORMANCE SUMMARY\n")
-    summary.to_csv(f)
-    f.write("\nCORRELATION MATRIX\n")
-    corr_matrix.round(4).to_csv(f)
-
-print(f"\n✅ Results saved to {output_path}")
-
-# Also save daily returns for reference
-returns_path = "/Users/kishankokal/repos/claude-agent-sdk/tmp/daily_returns.csv"
-daily_returns.to_csv(returns_path)
-print(f"✅ Daily returns saved to {returns_path}")
-
-# -----------------------------------------------------------------------
-# Print raw numbers for the assistant's analysis
-# -----------------------------------------------------------------------
-print("\n--- Raw values for analysis ---")
-for ticker in tickers:
-    print(f"{ticker}: Return={total_returns[ticker]:.2f}%  "
-          f"Vol={volatility[ticker]:.2f}%  "
-          f"MaxDD={max_dd[ticker]:.2f}%  "
-          f"R/V={sharpe[ticker]:.4f}")
-print("\nCorrelation:")
-print(corr_matrix.round(4))
+print(f"\n{sep}")
+print("       RAW VALUES (for analysis)")
+print(sep)
+for t in TICKERS:
+    print(f"  {t}:  Return={total_return[t]:>7.2f}%  "
+          f"Vol={volatility_ann[t]:>6.2f}%  "
+          f"Sharpe={sharpe_approx[t]:>5.2f}  "
+          f"MaxDD={max_dd[t]:>7.2f}%")

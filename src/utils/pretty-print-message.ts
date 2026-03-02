@@ -2,6 +2,11 @@ import { Logger } from '@nestjs/common';
 import { SDKMessage } from '../interfaces/sdk-message';
 import Anthropic from '@anthropic-ai/sdk';
 
+export interface Todo {
+  status: 'completed' | 'pending' | 'in_progress';
+  content: string;
+}
+
 export const prettyPrintMessage = (message: SDKMessage, logger: Logger) => {
   switch (message.type) {
     case 'system':
@@ -11,7 +16,20 @@ export const prettyPrintMessage = (message: SDKMessage, logger: Logger) => {
         if (content.type === 'text') {
           logger.log(`\n🤖 Assistant: ${content.text}`);
         } else if (content.type === 'tool_use') {
-          if (content.input) {
+          if (content.name === 'TodoWrite') {
+            let todosText = '';
+            const todos = (content.input as { todos: Todo[] }).todos;
+            todos.forEach((todo, index) => {
+              const status =
+                todo.status === 'completed'
+                  ? '✅'
+                  : todo.status === 'in_progress'
+                    ? '🔧'
+                    : '❌';
+              todosText += `\n${index + 1}. ${status} ${todo.content}`;
+            });
+            logger.log(todosText);
+          } else if (content.input) {
             // Show other arguments (excluding description)
             const args = content.input;
             if (args) {
