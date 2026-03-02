@@ -9,4 +9,9 @@ export class GettingStartedController {
   async yourFirstAgent(@Query('prompt') prompt: string) {
     return await this.gettingStartedService.yourFirstAgent(prompt);
   }
+
+  @Post('basic-stock-analysis')
+  async basicStockAnalysis() {
+    return await this.gettingStartedService.basicStockAnalysis();
+  }
 }

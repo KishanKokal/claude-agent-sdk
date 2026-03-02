@@ -1,0 +1,7 @@
+claude-agent-sdk>=0.1.19
+yfinance>=0.2.32
+pandas>=2.0.0
+python-dotenv>=1.0.0
+nest-asyncio>=1.5.8
+ipython>=8.12.0
+matplotlib>=3.7.0
