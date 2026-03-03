@@ -26,18 +26,17 @@ export class GettingStartedService implements OnModuleInit {
   constructor() {}
 
   async yourFirstAgent(prompt: string) {
+    // get the current working directory
+    const cwd = process.cwd();
     const result: Query = this.query({
       prompt,
       options: {
-        systemPrompt: {
-          type: 'preset',
-          preset: 'claude_code',
-        },
         model: 'claude-sonnet-4-6',
         // for continuing the session
         resume:
           this.staticSessionId.length > 0 ? this.staticSessionId : undefined,
         permissionMode: 'bypassPermissions',
+        cwd,
       },
     });
 

@@ -10,7 +10,6 @@ export interface Todo {
 export const prettyPrintMessage = (message: SDKMessage, logger: Logger) => {
   switch (message.type) {
     case 'system':
-      console.log(message);
       if (message.subtype === 'init') {
         const sessionId = message.session_id;
         logger.log(`\n🔁 Session initialised: ${sessionId}`);
