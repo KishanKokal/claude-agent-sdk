@@ -33,6 +33,7 @@ export class HooksService implements OnModuleInit {
     prompt: string | AsyncIterable<SDKUserMessage>;
     options?: Options;
   }) => Query;
+
   constructor() {}
 
   async onModuleInit() {

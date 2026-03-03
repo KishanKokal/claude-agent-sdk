@@ -4,9 +4,10 @@ import { AppService } from './app.service';
 import { GettingStartedModule } from './getting-started/getting-started.module';
 import { ConfigModule } from '@nestjs/config';
 import { HooksModule } from './hooks/hooks.module';
+import { SkillsModule } from './skills/skills.module';
 
 @Module({
-  imports: [GettingStartedModule, ConfigModule.forRoot(), HooksModule],
+  imports: [GettingStartedModule, ConfigModule.forRoot(), HooksModule, SkillsModule],
   controllers: [AppController],
   providers: [AppService],
 })
