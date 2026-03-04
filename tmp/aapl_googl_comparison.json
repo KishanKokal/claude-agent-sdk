@@ -1,0 +1,40 @@
+{
+  "comparison_date": "2026-03-04",
+  "period": "6mo",
+  "date_range": {
+    "start": "2025-09-04",
+    "end": "2026-03-03"
+  },
+  "stocks": [
+    {
+      "start_price": 239.32,
+      "end_price": 263.75,
+      "total_return_pct": 10.21,
+      "annualized_return_pct": 21.84,
+      "volatility_pct": 22.64,
+      "sharpe_ratio": 0.96,
+      "max_drawdown_pct": -13.8,
+      "ticker": "AAPL"
+    },
+    {
+      "start_price": 231.94,
+      "end_price": 303.58,
+      "total_return_pct": 30.89,
+      "annualized_return_pct": 72.81,
+      "volatility_pct": 26.6,
+      "sharpe_ratio": 2.74,
+      "max_drawdown_pct": -12.12,
+      "ticker": "GOOGL"
+    }
+  ],
+  "correlations": {
+    "AAPL_GOOGL": 0.5971
+  },
+  "rankings": {
+    "best_return": "GOOGL",
+    "worst_return": "AAPL",
+    "most_volatile": "GOOGL",
+    "least_volatile": "AAPL",
+    "best_risk_adjusted": "GOOGL"
+  }
+}

@@ -3,6 +3,8 @@ import { Options, Query, SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 import { loadEsm } from 'load-esm';
 import { SDKMessage } from 'src/interfaces/sdk-message';
 import { prettyPrintMessage } from 'src/utils/pretty-print-message';
+import * as path from 'node:path';
+import { mkdir } from 'node:fs/promises';
 
 /*
 What Are Skills?
@@ -94,6 +96,83 @@ export class SkillsService implements OnModuleInit {
         settingSources: ['user', 'project'],
         cwd,
       },
+    });
+
+    for await (const message of result as AsyncIterable<SDKMessage>) {
+      prettyPrintMessage(message, this.logger);
+    }
+  }
+
+  async stockAnalyzer() {
+    // get the current working directory
+    const cwd = process.cwd();
+
+    // ensure tmp directory exists
+    const tmpDir = path.join(cwd, 'tmp');
+    await mkdir(tmpDir, { recursive: true });
+
+    // get the absolute path to the tmp directory
+    const tmpPath = path.resolve(tmpDir);
+
+    this.logger.log(`Working directory: ${cwd}`);
+    this.logger.log(`Temp directory: ${tmpPath}`);
+
+    const options: Options = {
+      // Allow code generation and execution tools
+      allowedTools: ['Skill', 'Read', 'Write', 'Bash'],
+
+      // Auto-approve tool usage for smooth demo
+      // In production, use permission_mode="default" with approval callbacks
+      permissionMode: 'bypassPermissions',
+
+      // give access to the skills
+      settingSources: ['user', 'project'],
+
+      // Use Claude Sonnet for cost-effectiveness
+      model: 'claude-sonnet-4-6',
+
+      // Limit turns to prevent runaway execution
+      // maxTurns: 10,
+
+      // Set working directory to current directory
+      cwd: cwd,
+
+      // Custom system prompt to guide agent
+      systemPrompt: `You are a financial analysis assistant with specialized skills.
+
+IMPORTANT INSTRUCTIONS:
+1. **Skills Available**: You have three custom skills:
+   - stock-lookup: Fetch historical stock data for any ticker
+   - comparative-analysis: Compare multiple stocks side-by-side
+   - risk-analysis: Analyze volatility, beta, and risk metrics
+
+2. **When to Use Skills**:
+   - User asks about a specific stock → Use stock-lookup skill
+   - User wants to compare stocks → Use comparative-analysis skill
+   - User asks about risk/volatility → Use risk-analysis skill
+
+3. **File Operations**:
+   - Working directory: ${cwd}
+   - Save all outputs to: ${tmpPath}/
+   - Use absolute paths: ${tmpPath}/filename
+   - DO NOT use /tmp - use the tmp/ subdirectory
+
+4. **Package Management**:
+   - Use "uv run python" to execute Python scripts
+   - All packages (yfinance, pandas, etc.) are pre-installed
+
+5. **Communication Style**:
+   - Be conversational and helpful
+   - Explain financial concepts clearly
+   - Provide actionable insights
+   - Use the skills to avoid writing repetitive code
+
+Your goal is to help users make informed investment decisions through data-driven analysis.`,
+    };
+
+    const result = this.query({
+      prompt: `Compare Apple and Google Stocks from the last six months`,
+      options,
     });
 
     for await (const message of result as AsyncIterable<SDKMessage>) {

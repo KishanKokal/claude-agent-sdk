@@ -14,4 +14,9 @@ export class SkillsController {
   async writeBlogPost() {
     return await this.skillsService.writeBlogPost();
   }
+
+  @Post('stock-analyzer')
+  async stockAnalyzer() {
+    return await this.skillsService.stockAnalyzer();
+  }
 }
